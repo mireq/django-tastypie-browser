@@ -1,0 +1,4 @@
+include LICENSE
+include README.rst
+recursive-include tastypie_browser/static *
+recursive-include tastypie_browser/templates *
