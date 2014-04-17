@@ -96,14 +96,16 @@
 			{% block description %}
 			{{ description }}
 			{% endblock %}
-			<div class="request-info" style="clear: both" >
-				<pre class="prettyprint"><b>{{ request.method }}</b> {{ request.get_full_path }}</pre>
-			</div>
+			{% if request %}
+				<div class="request-info" style="clear: both" >
+					<pre class="prettyprint"><b>{{ request.method }}</b> {{ request.get_full_path }}</pre>
+				</div>
+			{% endif %}
 			<div class="response-info">
-				<pre class="prettyprint"><div class="meta nocode"><b>HTTP {{ response.status_code }}</b>{% autoescape off %}
+				<pre class="prettyprint"><div class="meta nocode"><b>HTTP {{ response.status_code }}</b>
 {% for key, val in response.items %}<b>{{ key }}:</b> <span class="lit">{{ val }}</span>
 {% endfor %}
-</div>{{ content }}</pre>{% endautoescape %}
+</div>{{ content|safe }}</pre>
 			</div>
 		</div>
 
