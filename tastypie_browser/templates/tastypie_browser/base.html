@@ -94,7 +94,9 @@
 		<div class="content-main">
 			<div class="page-header"><h1>{{ name }}</h1></div>
 			{% block description %}
-			{{ description }}
+			<p>Note that you can also explore the API from the command line, for instance
+			using the <code>curl</code> command-line tool.</p>
+			<p>For example: <code>curl -X {{ request.META.REQUEST_METHOD }} http://{{ request.META.HTTP_HOST }}{{ request.META.PATH_INFO }} -H "Accept: application/json"</code></p>
 			{% endblock %}
 			{% if request %}
 				<div class="request-info" style="clear: both" >

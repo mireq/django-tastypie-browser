@@ -21,6 +21,13 @@ class HtmlApi(api.Api):
 		super(HtmlApi, self).__init__(api_name=api_name, serializer_class=serializer_class)
 		setattr(self.serializer, 'api', self)
 
+	def top_level(self, request, api_name=None):
+		setattr(self, "_request", request)
+		response = super(HtmlApi, self).top_level(request, api_name)
+		if hasattr(self, "_request"):
+			delattr(self, "_request")
+		return response
+
 
 def patch_serializer():
 	link_re = re.compile(r'^(\s+&quot;[\w_-]+&quot;: &quot;)(/[a-z0-9/_-]+)(&quot;)', flags=re.MULTILINE)
@@ -36,10 +43,10 @@ def patch_serializer():
 		return data
 
 	def to_html(self, data, options=None):
-		if "resource" in options:
-			return self.resource_to_html(data, options)
-		else:
+		if "api" in options:
 			return self.toplevel_to_html(data, options)
+		else:
+			return self.resource_to_html(data, options)
 
 	def resource_to_html(self, data, options=None):
 		options = options or {}
@@ -92,6 +99,7 @@ def patch_serializer():
 			'breadcrumblist': breadcrumblist,
 			'data': data,
 			'content': content,
+			'request': getattr(api_instance, "_request", None)
 		}
 		templates = (
 			"tastypie_browser/toplevel.html",
