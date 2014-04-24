@@ -77,11 +77,11 @@ def patch_serializer():
 			'response': options['response'],
 			'name': resource_name,
 			'allowed_methods': [m.upper() for m in resource_options.allowed_methods],
-			'available_formats': self.formats,
+			'available_formats': [f for f in self.formats if hasattr(self, 'to_' + f)],
 			'breadcrumblist': breadcrumblist,
 			'data': data,
 			'url_info': url_info,
-			'content_types': self.content_types,
+			'content_types': dict(ct for ct in self.content_types.iteritems() if hasattr(self, 'from_' + ct[0]) and ct[0] in self.formats),
 			'default_method': 'PATCH' if url_info.url_name == 'api_dispatch_detail' else 'POST',
 		}
 		templates = (
