@@ -35,7 +35,7 @@ class HtmlApi(api.Api):
 
 
 def patch_serializer():
-	link_re = re.compile(r'^(\s+&quot;[\w_-]+&quot;: &quot;)(/[a-z0-9/_-]+)(&quot;)', flags=re.MULTILINE)
+	link_re = re.compile(r'^(\s+&quot;[\w_-]+&quot;: &quot;)(/[a-z0-9/?\&;=_-]+)(&quot;)', flags=re.MULTILINE)
 
 	def to_json(self, data, options=None):
 		options = options or {}
