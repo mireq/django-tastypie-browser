@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import re
 
 from django.core.serializers import json as djangojson
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.utils.html import escape
+from django.core.urlresolvers import resolve
+from django.conf import settings
+from urlparse import parse_qs
+from django.utils.encoding import force_text
 from tastypie import api
 from tastypie.serializers import Serializer
 
@@ -57,15 +62,14 @@ def patch_serializer():
 		resource_options = getattr(resource, "_meta")
 		api_name = resource_options.api_name
 		resource_name = resource_options.resource_name
-
 		path = request.path
-		list_path = resource.get_resource_uri()
+		url_info = resolve(request.path_info)
 
 		breadcrumblist = []
 		breadcrumblist.append(('API {0}'.format(api_name), reverse("api_{0}_top_level".format(api_name), kwargs={'api_name': api_name})))
-		breadcrumblist.append((resource_name, list_path))
-		if path != list_path:
-			breadcrumblist.append((path.split("/")[-2], request.path))
+		breadcrumblist.append((resource_name, resource.get_resource_uri()))
+		if path != resource.get_resource_uri():
+			breadcrumblist.append((path.split("/")[-2], path))
 
 		ctx = {
 			'content': content,
@@ -75,7 +79,10 @@ def patch_serializer():
 			'allowed_methods': [m.upper() for m in resource_options.allowed_methods],
 			'available_formats': self.formats,
 			'breadcrumblist': breadcrumblist,
-			'data': data
+			'data': data,
+			'url_info': url_info,
+			'content_types': self.content_types,
+			'default_method': 'PATCH' if url_info.url_name == 'api_dispatch_detail' else 'POST',
 		}
 		templates = (
 			"tastypie_browser/api_{0}.html".format(resource_name),
@@ -107,8 +114,21 @@ def patch_serializer():
 		)
 		return render_to_string(templates, ctx)
 
+	def from_urlencode(self, data, options=None):
+		options = options or {}
+		encoding = options.get("charset", settings.DEFAULT_CHARSET)
+		qs = dict((force_text(k, encoding, errors='replace'), force_text(v, encoding, errors='replace') if len(v)>1 else v[0]) for k, v in parse_qs(str(data)).iteritems())
+		if "_content_type" in qs:
+			ctype = qs['_content_type']
+			raw_data = qs['raw_data']
+			if ctype.split(";")[0] != 'application/x-www-form-urlencoded':
+				return self.deserialize(raw_data, ctype)
+		return qs
+
+	Serializer.content_types.update({'urlencode': 'application/x-www-form-urlencoded'})
 	setattr(Serializer, "to_json", to_json)
 	setattr(Serializer, "to_html", to_html)
+	setattr(Serializer, "from_urlencode", from_urlencode)
 	setattr(Serializer, "resource_to_html", resource_to_html)
 	setattr(Serializer, "toplevel_to_html", toplevel_to_html)
 	setattr(Serializer, "link_re", link_re)

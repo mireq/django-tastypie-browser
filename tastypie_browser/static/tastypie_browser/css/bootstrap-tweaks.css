@@ -82,7 +82,7 @@ html, body {
   min-height: 100%;
   height: auto !important;
   height: 100%;
-  margin: 0 auto -60px;
+  margin: 58px auto -60px;
 }
 
 .form-switcher {
@@ -182,4 +182,8 @@ body a:hover{
 
 .request-info {
     clear:both;
+}
+
+.raw_input {
+	height: 500px;
 }

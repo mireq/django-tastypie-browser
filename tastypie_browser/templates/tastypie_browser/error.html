@@ -1,0 +1,6 @@
+{% extends "tastypie_browser/base_site.html" %}
+
+{% block breadcrumbs %}{% endblock %}
+{% block description %}{% endblock %}
+{% block site_title %}Error {{ response.status_code }}{% endblock %}
+{% block right_buttons %}<a class="btn btn-primary" href='{{ request.get_full_path }}' rel="nofollow" title="Back">Back</a>{% endblock %}

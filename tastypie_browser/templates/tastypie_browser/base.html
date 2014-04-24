@@ -53,27 +53,27 @@
 	<!-- Content -->
 	<div id="content">
 
-		{% if 'GET' in allowed_methods %}
-			<form id="get-form" class="pull-right">
-				<fieldset>
-					<div class="btn-group format-selection">
-						<a class="btn btn-primary js-tooltip" href='{{ request.get_full_path }}' rel="nofollow" title="Make a GET request on the {{ name }} resource">GET</a>
+		<form id="get-form" class="pull-right">
+			<fieldset>
+				{% block right_buttons %}
+				<div class="btn-group format-selection">
+					<a class="btn btn-primary js-tooltip" href='{{ request.get_full_path }}' rel="nofollow" title="Make a GET request on the {{ name }} resource">GET</a>
 
-						<button class="btn btn-primary dropdown-toggle js-tooltip" data-toggle="dropdown" title="Specify a format for the GET request">
-							<span class="caret"></span>
-						</button>
-						<ul class="dropdown-menu">
-							{% for format in available_formats %}
-								<li>
-									<a class="js-tooltip format-option" href='{{ request.path }}?format={{ format }}' rel="nofollow" title="Make a GET request on the {{ name }} resource with the format set to `{{ format }}`">{{ format }}</a>
-								</li>
-							{% endfor %}
-						</ul>
-					</div>
+					<button class="btn btn-primary dropdown-toggle js-tooltip" data-toggle="dropdown" title="Specify a format for the GET request">
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu">
+						{% for format in available_formats %}
+							<li>
+								<a class="js-tooltip format-option" href='{{ request.path }}?format={{ format }}' rel="nofollow" title="Make a GET request on the {{ name }} resource with the format set to `{{ format }}`">{{ format }}</a>
+							</li>
+						{% endfor %}
+					</ul>
+				</div>
+				{% endblock %}
 
-				</fieldset>
-			</form>
-		{% endif %}
+			</fieldset>
+		</form>
 
 		{% if options_form %}
 			<form class="button-form" action="{{ request.get_full_path }}" method="POST" class="pull-right">
@@ -92,7 +92,7 @@
 		{% endif %}
 
 		<div class="content-main">
-			<div class="page-header"><h1>{{ name }}</h1></div>
+			<div class="page-header"><h1>{% block site_title %}{{ name }}{% endblock %}</h1></div>
 			{% block description %}
 			<p>Note that you can also explore the API from the command line, for instance
 			using the <code>curl</code> command-line tool.</p>
@@ -111,90 +111,61 @@
 			</div>
 		</div>
 
-			{% if display_edit_forms %}
-
-				{% if post_form or raw_data_post_form %}
-				<div {% if post_form %}class="tabbable"{% endif %}>
+		{% if 'POST' in allowed_methods and url_info.url_name == 'api_dispatch_detail' and 'PATCH' in allowed_methods or url_info.url_name == 'api_dispatch_list' and 'POST' in allowed_methods %}
+			<div class="tabbable">
+				<ul class="nav nav-tabs form-switcher">
 					{% if post_form %}
-					<ul class="nav nav-tabs form-switcher">
 						<li><a name='html-tab' href="#object-form" data-toggle="tab">HTML form</a></li>
-						<li><a name='raw-tab' href="#generic-content-form" data-toggle="tab">Raw data</a></li>
-					</ul>
 					{% endif %}
-					<div class="well tab-content">
-						{% if post_form %}
-						<div class="tab-pane" id="object-form">
-							{% with form=post_form %}
-							<form action="{{ request.get_full_path }}" method="POST" enctype="multipart/form-data" class="form-horizontal">
-								<fieldset>
-									{{ post_form }}
-									<div class="form-actions">
-										<button class="btn btn-primary" title="Make a POST request on the {{ name }} resource">POST</button>
+					<li><a name='raw-tab' href="#generic-content-form" data-toggle="tab">Raw data</a></li>
+				</ul>
+				<div class="well tab-content">
+					{% if post_form %}
+					<div class="tab-pane" id="object-form">
+						{% with form=post_form %}
+						<form action="{{ request.get_full_path }}" method="POST" enctype="multipart/form-data" class="form-horizontal">
+							<fieldset>
+								{{ post_form }}
+								<div class="form-actions">
+									<button class="btn btn-primary" title="Make a POST request on the {{ name }} resource">POST</button>
+								</div>
+							</fieldset>
+						</form>
+						{% endwith %}
+					</div>
+					{% endif %}
+					<div {% if post_form %}class="tab-pane"{% endif %} id="generic-content-form">
+						{% with form=raw_data_post_form %}
+						<form action="{{ request.get_full_path }}" method="POST" class="form-horizontal">{% csrf_token %}
+							<fieldset>
+								<div class="control-group">
+									<label for="content_type" class="control-label required">Format</label>
+									<div class="controls">
+										<select id="content_type" name="_content_type" id="format_select">
+											{% for format, content_type in content_types.items %}
+												<option value="{{ content_type }}">{{ content_type }}</option>
+											{% endfor %}
+										</select>
 									</div>
-								</fieldset>
-							</form>
-							{% endwith %}
-						</div>
-						{% endif %}
-						<div {% if post_form %}class="tab-pane"{% endif %} id="generic-content-form">
-							{% with form=raw_data_post_form %}
-							<form action="{{ request.get_full_path }}" method="POST" class="form-horizontal">
-								<fieldset>
-									{% include "tastypie_browser/raw_data_form.html" %}
-									<div class="form-actions">
-										<button class="btn btn-primary" title="Make a POST request on the {{ name }} resource">POST</button>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="raw_data">Data</label>
+									<div class="controls">
+										<textarea class="raw_input" id="raw_data" name="raw_data"></textarea>
+										<span class="help-block">{{ field.help_text }}</span>
 									</div>
-								</fieldset>
-							</form>
-							{% endwith %}
-						</div>
+								</div>
+								<div class="form-actions">
+									<input type="hidden" name="_method" value="{{ default_method }}" />
+									<button class="btn btn-primary" title="Make a {{ default_method }} request on the {{ name }} resource">{{ default_method }}</button>
+								</div>
+							</fieldset>
+						</form>
+						{% endwith %}
 					</div>
 				</div>
-				{% endif %}
-
-				{% if put_form or raw_data_put_form or raw_data_patch_form %}
-				<div {% if put_form %}class="tabbable"{% endif %}>
-					{% if put_form %}
-					<ul class="nav nav-tabs form-switcher">
-						<li><a name='html-tab' href="#object-form" data-toggle="tab">HTML form</a></li>
-						<li><a  name='raw-tab' href="#generic-content-form" data-toggle="tab">Raw data</a></li>
-					</ul>
-					{% endif %}
-					<div class="well tab-content">
-						{% if put_form %}
-						<div class="tab-pane" id="object-form">
-							<form action="{{ request.get_full_path }}" method="POST" enctype="multipart/form-data" class="form-horizontal">
-								<fieldset>
-									{{ put_form }}
-									<div class="form-actions">
-										<button class="btn btn-primary js-tooltip" name="{{ api_settings.FORM_METHOD_OVERRIDE }}" value="PUT" title="Make a PUT request on the {{ name }} resource">PUT</button>
-									</div>
-								</fieldset>
-							</form>
-						</div>
-						{% endif %}
-						<div {% if put_form %}class="tab-pane"{% endif %} id="generic-content-form">
-							{% with form=raw_data_put_or_patch_form %}
-							<form action="{{ request.get_full_path }}" method="POST" class="form-horizontal">
-								<fieldset>
-									{% include "tastypie_browser/raw_data_form.html" %}
-									<div class="form-actions">
-										{% if raw_data_put_form %}
-										<button class="btn btn-primary js-tooltip" name="{{ api_settings.FORM_METHOD_OVERRIDE }}" value="PUT" title="Make a PUT request on the {{ name }} resource">PUT</button>
-										{% endif %}
-										{% if raw_data_patch_form %}
-										<button class="btn btn-primary js-tooltip" name="{{ api_settings.FORM_METHOD_OVERRIDE }}" value="PATCH" title="Make a PATCH request on the {{ name }} resource">PATCH</button>
-										{% endif %}
-									</div>
-								</fieldset>
-							</form>
-							{% endwith %}
-						</div>
-					</div>
-				</div>
-				{% endif %}
-			{% endif %}
-
+			</div>
+		{% endif %}
 		</div>
 		<!-- END content-main -->
 
